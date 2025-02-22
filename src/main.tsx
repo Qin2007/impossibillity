@@ -16,7 +16,7 @@ Devvit.addCustomPostType({
 
     const webView = useWebView({
       // URL of your web view content
-      url: 'page.html',
+      url: 'page2.html?t='+(+new Date),
 
       // Handle messages sent from the web view
       async onMessage(message, webView) { },
