@@ -20,3 +20,7 @@ to make moderating easier there will be a pinned comment for every quiz that has
 the corect answer isnt there but the answers are.
 
 ## changelog (admin request)
+
+### 0.0.5 and 0.0.4 and 0.0.6 and 0.0.7
+
+- fixed bug and added restriction, and changed puntuation. 0.0.7 doesnt anything

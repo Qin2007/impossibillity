@@ -202,7 +202,7 @@ Devvit.addCustomPostType({
 
       if (!'1,2,3,4'.split(',').includes(String(values[`answer-n`]))) {
         context.ui.showToast("Sorry but the correct answer must be one of 1, 2, 3, 4");
-        return
+        return;
       }
       const answers = {
         [`Q--`]: values[`question`], [`a-0`]: values[`answer-1`],
@@ -229,8 +229,12 @@ Devvit.addCustomPostType({
           update(iterator_);
           return;
         }
-        if (questionsArray.length >= totalMaxQuestions || (questionsArray.length >= max_questions && !unrestricted_level)) {
-          context.ui.showToast("Sorry. you already have the max questions");
+        if (questionsArray.length > totalMaxQuestions) {
+          context.ui.showToast(`Sorry. a quiz can only have upto ${totalMaxQuestions} questions`);
+          return;
+        }
+        if (questionsArray.length >= max_questions && !unrestricted_level) {
+          context.ui.showToast("Sorry. you already have the max questions that your level allows");
           return;
         }
         context.ui.showForm(form);
@@ -292,7 +296,7 @@ Devvit.addCustomPostType({
           throw new Error;
       }
       const correct = current_correct_answer === posN;
-      context.ui.showToast((correct ? 'correct' : 'wrong') + ', you chose ' + posN);
+      context.ui.showToast((correct ? 'correct' : 'wrong') + '!');
       if (correct) {
 
         const newItem = questionNumberPlayer + 1;
