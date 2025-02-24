@@ -29,21 +29,21 @@ function create_preview(appVersion: string) {
   const disabled = true;
   return (
     <vstack height="100%" width="100%" gap="medium" alignment="center middle">
-      <text>Question1</text>
+      <text>Ask A Question!</text>
       <hstack gap="medium">
         <button appearance="primary" disabled={disabled}>
-          Top Left
+          Top Left Answer
         </button>
         <button appearance="primary" disabled={disabled}>
-          Top Right
+          Top Right Answer
         </button>
       </hstack>
       <hstack gap="medium">
         <button appearance="primary" disabled={disabled}>
-          Bottom Left
+          Bottom Left Answer
         </button>
         <button appearance="primary" disabled={disabled}>
-          Bottom Right
+          Bottom Right Answer
         </button>
       </hstack>
 
@@ -98,11 +98,11 @@ function typeOf(mixed: any): "string" | "number" | "bigint" | "boolean" | "symbo
   if (mixed === null) return 'NULL';
   return typeof mixed;
 }
-// @ts-ignore
+
 Devvit.addTrigger({
   event: 'PostDelete',
-  handler: async function (event: any, context: any) {
-    const postId = event.post.id;
+  onEvent: async function (event, context) {
+    const postId = event.postId;
     await context.redis.del(`post-quiz-${postId}`);
   },
 });
@@ -115,6 +115,11 @@ function deleteItemAtIndex(arr: any[], index: number) {
     console.log("Index out of bounds");
     return arr;
   }
+}
+function normalize_newlines(string: string) { return String(string).replace(/\r\n/g, '\n').replace(/\r/g, '\n'); }
+
+function escape(string: string): string {
+  return normalize_newlines(string).replace(/[~`>\-\\\[\]()#^&*_!<]/g, '\\$&');
 }
 
 // Add a custom post type to Devvit
@@ -136,11 +141,12 @@ Devvit.addCustomPostType({
     const [questionText, set_questionText] = useState('Question1');
     const [max_questions, set_max_questions] = useState(1);
     const [questionsArray, set_questionsArray]: any[] = useState([
-      question("Which of the following do you need to build a green house?", "Bricks", "Paint", "Glass", "Vodka", 2),
-      question("Which is the largest?", "Earth", "Mars", "Milky Way", "Galaxy", 1),
-      question("What time is my dentist appointment?", "12:15", "4:53", "2:30", "Hammer", 3),
-      question("MTWTFS?", "M", "T", "F", "S", 4),
-    ]), unrestricted_level = true, [questionsArrayPlayers, set_questionsArrayPlayers]: any[] = useState([]);
+      // question("Which of the following do you need to build a green house?", "Bricks", "Paint", "Glass", "Vodka", 2),
+      // question("Which is the largest?", "Earth", "Mars", "Milky Way", "Galaxy", 1),
+      // question("What time is my dentist appointment?", "12:15", "4:53", "2:30", "Hammer", 3),
+      // question("MTWTFS?", "M", "T", "F", "S", 4),
+    ]), [questionsArrayPlayers, set_questionsArrayPlayers]: any[] = useState([]);
+    const unrestricted_level = true, totalMaxQuestions = 20;
     // @ts-ignore
     useAsync(async function () {
       return await context.redis.get(`user-stats-${context.userId}`);
@@ -193,6 +199,11 @@ Devvit.addCustomPostType({
       title: 'Create a Quiz!', description: 'Create an quiz for users to complete',
       fields: instantiatedForm, acceptLabel: 'Create', cancelLabel: 'Cancel',
     }, async function (values) {
+
+      if (!/^[1234]$/.test(String(values[`answer-n`]))) {
+        context.ui.showToast("Sorry but the correct answer must be one of 1, 2, 3, 4");
+        return
+      }
       const answers = {
         [`Q--`]: values[`question`], [`a-0`]: values[`answer-1`],
         [`a-1`]: values[`answer-2`], [`a-2`]: values[`answer-3`],
@@ -218,7 +229,7 @@ Devvit.addCustomPostType({
           update(iterator_);
           return;
         }
-        if (questionsArray.length >= 10 || (questionsArray.length >= max_questions && !unrestricted_level)) {
+        if (questionsArray.length >= totalMaxQuestions || (questionsArray.length >= max_questions && !unrestricted_level)) {
           context.ui.showToast("Sorry. you already have the max questions");
           return;
         }
@@ -235,7 +246,7 @@ Devvit.addCustomPostType({
       // //const currentUser = await context.reddit.getCurrentUser(), subreddit = await context.reddit.getCurrentSubreddit();
       // const currentUserName = await context.reddit.getCurrentUsername(), subredditName = await context.reddit.getCurrentSubredditName();
       // if (currentUserName && subredditName) {
-      //   if (questionsArray.length >= 10 || (questionsArray.length >= max_questions && !unrestricted_level)) {
+      //   if (questionsArray.length >= totalMaxQuestions || (questionsArray.length >= max_questions && !unrestricted_level)) {
       //     context.ui.showToast("Sorry. you already have the max questions");
       //     return;
       //   }
@@ -303,7 +314,7 @@ Devvit.addCustomPostType({
     const max = questionsArray.length - 1, questionNumber = postType === 'Editor' ? (iterator_ + 1) : questionNumberPlayer + 1;
     return (
       <vstack height="100%" width="100%" gap="medium" alignment="center middle">
-        <text>Q {questionNumber}: {questionText}</text>
+        <text wrap={true}>Q {questionNumber}: {questionText}</text>
         <hstack gap="medium">
           <button appearance="primary" disabled={disabled} onPress={async function () { await submitted('TL'); }}>{Top_Left}</button>
           <button appearance="primary" disabled={disabled} onPress={async function () { await submitted('TR'); }}>{Top_Right}</button>
@@ -315,13 +326,19 @@ Devvit.addCustomPostType({
 
         <hstack gap="medium">
           {postType === 'Editor' ? <button appearance="destructive" onPress={async function () {
+            if (!(questionsArray.length > 0)) {
+              context.ui.showToast("Sorry. but there is nothing to delete");
+              return;
+            }
+
             const newItem = Math.max(iterator_ - 1, 0);
             setIterator_(newItem);
             //set_questionsArray([...deleteItemAtIndex(questionsArray, newItem)]);
             questionsArray.splice(iterator_, 1);
             const questions_array: any[] = [...questionsArray];
             set_questionsArray(questions_array);
-            update(questions_array[newItem])
+            update(questions_array[newItem]);
+            context.ui.showToast("Sucessfully deleted the question");
           }}>Delete question</button> : <button appearance="destructive" disabled={disabled} onPress={async function () {
             context.ui.showToast("You are a fool if you think i would just give you the answer");
           }}>i give up</button>}
@@ -340,14 +357,30 @@ Devvit.addCustomPostType({
                 context.ui.showToast("Sorry. but what even are you asking the users? nothing?");
                 return;
               }
-              const currentUserName = await context.reddit.getCurrentUsername(), subredditName = await context.reddit.getCurrentSubredditName();
+              const currentUserName = await context.reddit.getCurrentUsername(),
+                subredditName = await context.reddit.getCurrentSubredditName(),
+                questionTitle = escape(questionsArray[0]['Q--']),
+                postTitle = `u/${currentUserName}'s new Quiz "${questionTitle}" (${context.appVersion})`,
+                escapeItem = function (item: string) { return `>!${escape(item)}!<`; };
               if (currentUserName && subredditName) {
+                context.ui.showToast("Submitting Quiz");
                 const post = await context.reddit.submitPost({
-                  title: `u/${currentUserName}'s new Quiz (${context.appVersion})`,
-                  subredditName: subredditName, preview: create_preview(context.appVersion),
-                }), post_id = `post-quiz-${post.id}`;
-                await context.redis.set(post_id, JSON.stringify({ questionsArray }));
-                await context.redis.expire(post_id, 30 * 24 * 60 * 60);
+                  title: postTitle, subredditName: subredditName, preview: create_preview(context.appVersion),
+                }), post_id = post.id, post_id_db = `post-quiz-${post.id}`;
+                let commentString = '', questionIndex = 0;
+                for (const element of questionsArray) {
+                  let answers = '';
+                  for (let answerIndex = 0; answerIndex < 4; answerIndex++) {
+                    answers += `${answerIndex + 1}. ${escapeItem(element['a-' + answerIndex])}\n`;
+                  }
+                  commentString += `\n\n## Question ${++questionIndex}: ${escapeItem(element['Q--'])}\n\n${answers}`;
+                }
+                (await context.reddit.submitComment({
+                  id: post_id, text: `${postTitle}\n\n- \`Quiz Creator:\` u/${currentUserName}\n- \`CreationTime: ${Date()}\`\n- \`AppVersion:`
+                    + ` ${context.appVersion}\` ${commentString}\nto play this quiz please use the buttons on the what otherwise is an image`
+                })).distinguish(true);
+                await context.redis.set(post_id_db, JSON.stringify({ questionsArray }));
+                await context.redis.expire(post_id_db, 30 * 24 * 60 * 60);
                 context.ui.navigateTo(post);
               } else {
                 context.ui.showToast("Sorry. only accounts with username can post");
