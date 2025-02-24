@@ -107,6 +107,16 @@ Devvit.addTrigger({
   },
 });
 
+function deleteItemAtIndex(arr: any[], index: number) {
+  index = Number(index);
+  if (index >= 0 && index < arr.length) {
+    return arr.splice(index, 1); // Remove 1 item at the specified index
+  } else {
+    console.log("Index out of bounds");
+    return arr;
+  }
+}
+
 // Add a custom post type to Devvit
 Devvit.addCustomPostType({
   name: 'Quizpost',
@@ -126,11 +136,11 @@ Devvit.addCustomPostType({
     const [questionText, set_questionText] = useState('Question1');
     const [max_questions, set_max_questions] = useState(1);
     const [questionsArray, set_questionsArray]: any[] = useState([
-      // question("Which of the following do you need to build a green house?", "Bricks", "Paint", "Glass", "Vodka", 2),
-      // question("Which is the largest?", "Earth", "Mars", "Milky Way", "Galaxy", 1),
-      // question("What time is my dentist appointment?", "12:15", "4:53", "2:30", "Hammer", 3),
-      // question("MTWTFS?", "M", "T", "F", "S", 4),
-    ]), unrestricted_level = false, [questionsArrayPlayers, set_questionsArrayPlayers]: any[] = useState([]);
+      question("Which of the following do you need to build a green house?", "Bricks", "Paint", "Glass", "Vodka", 2),
+      question("Which is the largest?", "Earth", "Mars", "Milky Way", "Galaxy", 1),
+      question("What time is my dentist appointment?", "12:15", "4:53", "2:30", "Hammer", 3),
+      question("MTWTFS?", "M", "T", "F", "S", 4),
+    ]), unrestricted_level = true, [questionsArrayPlayers, set_questionsArrayPlayers]: any[] = useState([]);
     // @ts-ignore
     useAsync(async function () {
       return await context.redis.get(`user-stats-${context.userId}`);
@@ -171,7 +181,7 @@ Devvit.addCustomPostType({
       },
     });
     function update(iterator__: number | any, array: any[] | null | undefined = undefined) {
-      const answers = typeOf(iterator__) === 'number' ? ((array ?? questionsArray)[iterator__] ?? {}) : Object(iterator__);
+      const answers = typeOf(iterator__) === 'number' ? Object((array ?? questionsArray)[iterator__] ?? null) : Object(iterator__);
       set_Top_Left(`${answers['a-0'] ?? 'Top Left'}`);
       set_Top_Right(`${answers['a-1'] ?? 'Top Right'}`);
       set_Bottom_Left(`${answers['a-2'] ?? 'Bottom Left'}`);
@@ -200,23 +210,37 @@ Devvit.addCustomPostType({
       update(answers);
     }), turn_to_editor = postType === 'Editor' ? 'Create new Question' : 'Create my own Quiz';
     const asyncRunner = async function () {
-      if (postType !== 'Editor') {
-        set_postType('Editor');
-        set_disabled(true);
-        update(iterator_);
-        return;
-      }
-      //const currentUser = await context.reddit.getCurrentUser(), subreddit = await context.reddit.getCurrentSubreddit();
       const currentUserName = await context.reddit.getCurrentUsername(), subredditName = await context.reddit.getCurrentSubredditName();
       if (currentUserName && subredditName) {
+        if (postType !== 'Editor') {
+          set_postType('Editor');
+          set_disabled(true);
+          update(iterator_);
+          return;
+        }
         if (questionsArray.length >= 10 || (questionsArray.length >= max_questions && !unrestricted_level)) {
           context.ui.showToast("Sorry. you already have the max questions");
           return;
         }
-        if (postType === 'Editor') { context.ui.showForm(form); }
+        context.ui.showForm(form);
       } else {
-        context.ui.showToast("Sorry. only accounts with username can post");
+        context.ui.showToast("Sorry. only accounts with username can create quizes");
       }
+      // if (postType !== 'Editor') {
+      //   set_postType('Editor');
+      //   set_disabled(true);
+      //   update(iterator_);
+      //   return;
+      // }
+      // //const currentUser = await context.reddit.getCurrentUser(), subreddit = await context.reddit.getCurrentSubreddit();
+      // const currentUserName = await context.reddit.getCurrentUsername(), subredditName = await context.reddit.getCurrentSubredditName();
+      // if (currentUserName && subredditName) {
+      //   if (questionsArray.length >= 10 || (questionsArray.length >= max_questions && !unrestricted_level)) {
+      //     context.ui.showToast("Sorry. you already have the max questions");
+      //     return;
+      //   }
+      //   if (postType === 'Editor') { context.ui.showForm(form); }
+      // } else { context.ui.showToast("Sorry. only accounts with username can post"); }
     };
     function set_iterator(sign: "+" | "-"): any {
       return function (): void {
@@ -276,10 +300,10 @@ Devvit.addCustomPostType({
         }
       }
     }
-    const max = questionsArray.length - 1;
+    const max = questionsArray.length - 1, questionNumber = postType === 'Editor' ? (iterator_ + 1) : questionNumberPlayer + 1;
     return (
       <vstack height="100%" width="100%" gap="medium" alignment="center middle">
-        <text>{questionText}</text>
+        <text>Q {questionNumber}: {questionText}</text>
         <hstack gap="medium">
           <button appearance="primary" disabled={disabled} onPress={async function () { await submitted('TL'); }}>{Top_Left}</button>
           <button appearance="primary" disabled={disabled} onPress={async function () { await submitted('TR'); }}>{Top_Right}</button>
@@ -290,36 +314,47 @@ Devvit.addCustomPostType({
         </hstack>
 
         <hstack gap="medium">
-          <button appearance="destructive" disabled={disabled} onPress={async function () {
+          {postType === 'Editor' ? <button appearance="destructive" onPress={async function () {
+            const newItem = Math.max(iterator_ - 1, 0);
+            setIterator_(newItem);
+            //set_questionsArray([...deleteItemAtIndex(questionsArray, newItem)]);
+            questionsArray.splice(iterator_, 1);
+            const questions_array: any[] = [...questionsArray];
+            set_questionsArray(questions_array);
+            update(questions_array[newItem])
+          }}>Delete question</button> : <button appearance="destructive" disabled={disabled} onPress={async function () {
             context.ui.showToast("You are a fool if you think i would just give you the answer");
-          }}>i give up</button>
+          }}>i give up</button>}
           <button appearance="bordered" disabled={false} onPress={asyncRunner}>{turn_to_editor}</button>
         </hstack>
         <hstack gap="medium">
           {postType === 'Editor' ? <button appearance="primary" onPress={set_iterator('-')} disabled={!(iterator_ > 0)}>&lt;</button> : null}
-          <text>Question {postType === 'Editor' ? (iterator_ + 1) : questionNumberPlayer + 1}, (appV=&quot;{context.appVersion}&quot;)</text>
-          {postType === 'Editor' ? <text>you can have {max_questions} in a quiz total</text> : null}
+          <text>Question {questionNumber}, (appV=&quot;{context.appVersion}&quot;)</text>
           {postType === 'Editor' ? <button appearance="primary" onPress={set_iterator('+')} disabled={!(iterator_ < max)}>&gt;</button> : null}
         </hstack>
-
-        {postType === 'Editor' ? <button appearance="success" onPress={async function () {
-          if (!(questionsArray.length > 0)) {
-            context.ui.showToast("Sorry. but what even are you asking the users? nothing?");
-            return;
-          }
-          const currentUserName = await context.reddit.getCurrentUsername(), subredditName = await context.reddit.getCurrentSubredditName();
-          if (currentUserName && subredditName) {
-            const post = await context.reddit.submitPost({
-              title: `u/${currentUserName}'s new Quiz (${context.appVersion})`,
-              subredditName: subredditName, preview: create_preview(context.appVersion),
-            }), post_id = `post-quiz-${post.id}`;
-            await context.redis.set(post_id, JSON.stringify({ questionsArray }));
-            await context.redis.expire(post_id, 30 * 24 * 60 * 60);
-            context.ui.navigateTo(post);
-          } else {
-            context.ui.showToast("Sorry. only accounts with username can post");
-          }
-        }}>Create</button> : null}
+        {postType === 'Editor' ? <text>you can have {max_questions} in a quiz total (you have {questionsArray.length} currently)</text> : null}
+        {postType === 'Editor' ? <>
+          <hstack gap="medium">
+            <button appearance="success" onPress={async function () {
+              if (!(questionsArray.length > 0)) {
+                context.ui.showToast("Sorry. but what even are you asking the users? nothing?");
+                return;
+              }
+              const currentUserName = await context.reddit.getCurrentUsername(), subredditName = await context.reddit.getCurrentSubredditName();
+              if (currentUserName && subredditName) {
+                const post = await context.reddit.submitPost({
+                  title: `u/${currentUserName}'s new Quiz (${context.appVersion})`,
+                  subredditName: subredditName, preview: create_preview(context.appVersion),
+                }), post_id = `post-quiz-${post.id}`;
+                await context.redis.set(post_id, JSON.stringify({ questionsArray }));
+                await context.redis.expire(post_id, 30 * 24 * 60 * 60);
+                context.ui.navigateTo(post);
+              } else {
+                context.ui.showToast("Sorry. only accounts with username can post");
+              }
+            }}>Create Quiz</button>
+          </hstack>
+        </> : null}
       </vstack>
     );
   },
