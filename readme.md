@@ -21,8 +21,9 @@ the corect answer isnt there but the answers are.
 
 ## changelog (admin request)
 
-### 0.0.8
+### 0.0.8 and 0.0.9
 
+- proper indication for unlimited mode
 - fixed bug and set in to be unlimited mode
 
 ### 0.0.5 and 0.0.4 and 0.0.6 and 0.0.7
