@@ -200,7 +200,7 @@ Devvit.addCustomPostType({
       fields: instantiatedForm, acceptLabel: 'Create', cancelLabel: 'Cancel',
     }, async function (values) {
 
-      if (!/^[1234]$/.test(String(values[`answer-n`]))) {
+      if (!'1,2,3,4'.split(',').includes(String(values[`answer-n`]))) {
         context.ui.showToast("Sorry but the correct answer must be one of 1, 2, 3, 4");
         return
       }
