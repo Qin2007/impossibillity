@@ -146,7 +146,7 @@ Devvit.addCustomPostType({
       // question("What time is my dentist appointment?", "12:15", "4:53", "2:30", "Hammer", 3),
       // question("MTWTFS?", "M", "T", "F", "S", 4),
     ]), [questionsArrayPlayers, set_questionsArrayPlayers]: any[] = useState([]);
-    const unrestricted_level = true, totalMaxQuestions = 20;
+    const unlimited_mode = true, totalMaxQuestions = 20;
     // @ts-ignore
     useAsync(async function () {
       return await context.redis.get(`user-stats-${context.userId}`);
@@ -233,7 +233,7 @@ Devvit.addCustomPostType({
           context.ui.showToast(`Sorry. a quiz can only have upto ${totalMaxQuestions} questions`);
           return;
         }
-        if (questionsArray.length >= max_questions && !unrestricted_level) {
+        if (questionsArray.length >= max_questions && !unlimited_mode) {
           context.ui.showToast("Sorry. you already have the max questions that your level allows");
           return;
         }
@@ -250,7 +250,7 @@ Devvit.addCustomPostType({
       // //const currentUser = await context.reddit.getCurrentUser(), subreddit = await context.reddit.getCurrentSubreddit();
       // const currentUserName = await context.reddit.getCurrentUsername(), subredditName = await context.reddit.getCurrentSubredditName();
       // if (currentUserName && subredditName) {
-      //   if (questionsArray.length >= totalMaxQuestions || (questionsArray.length >= max_questions && !unrestricted_level)) {
+      //   if (questionsArray.length >= totalMaxQuestions || (questionsArray.length >= max_questions && !unlimited_mode)) {
       //     context.ui.showToast("Sorry. you already have the max questions");
       //     return;
       //   }
@@ -353,7 +353,7 @@ Devvit.addCustomPostType({
           <text>Question {questionNumber}, (appV=&quot;{context.appVersion}&quot;)</text>
           {postType === 'Editor' ? <button appearance="primary" onPress={set_iterator('+')} disabled={!(iterator_ < max)}>&gt;</button> : null}
         </hstack>
-        {postType === 'Editor' ? <text>you can have {max_questions} in a quiz total (you have {questionsArray.length} currently)</text> : null}
+        {postType === 'Editor' ? <text>you can have {(unlimited_mode ? totalMaxQuestions : max_questions)} in a quiz total (you have {questionsArray.length} currently)</text> : null}
         {postType === 'Editor' ? <>
           <hstack gap="medium">
             <button appearance="success" onPress={async function () {
