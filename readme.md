@@ -21,6 +21,10 @@ the corect answer isnt there but the answers are.
 
 ## changelog (admin request)
 
+### 0.0.10
+
+this quiz is for everyone to everyone, not mod only.
+
 ### 0.0.8 and 0.0.9
 
 - proper indication for unlimited mode
