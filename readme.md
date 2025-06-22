@@ -19,7 +19,13 @@ quizes can only have up to 20 questions or your level, whichever is lower.
 to make moderating easier there will be a pinned comment for every quiz that has the questions in spoilers.
 the corect answer isnt there but the answers are.
 
-## changelog (admin request)
+## changelog
+
+### 0.0.11: updated devvit
+
+this quiz is for everyone to everyone, not mod only.
+
+updated devvit
 
 ### 0.0.10
 

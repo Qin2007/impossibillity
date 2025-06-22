@@ -118,10 +118,6 @@ function deleteItemAtIndex(arr: any[], index: number) {
 }
 function normalize_newlines(string: string) { return String(string).replace(/\r\n/g, '\n').replace(/\r/g, '\n'); }
 
-function escape(string: string): string {
-  return normalize_newlines(string).replace(/[~`>\-\\\[\]()#^&*_!<]/g, '\\$&');
-}
-
 // Add a custom post type to Devvit
 Devvit.addCustomPostType({
   name: 'Quizpost',
@@ -363,9 +359,9 @@ Devvit.addCustomPostType({
               }
               const currentUserName = await context.reddit.getCurrentUsername(),
                 subredditName = await context.reddit.getCurrentSubredditName(),
-                questionTitle = escape(questionsArray[0]['Q--']),
+                questionTitle = RegExp.escape(questionsArray[0]['Q--']),
                 postTitle = `u/${currentUserName}'s new Quiz "${questionTitle}" (${context.appVersion})`,
-                escapeItem = function (item: string) { return `>!${escape(item)}!<`; };
+                escapeItem = function (item: string) { return `>!${RegExp.escape(item)}!<`; };
               if (currentUserName && subredditName) {
                 context.ui.showToast("Submitting Quiz");
                 const post = await context.reddit.submitPost({
