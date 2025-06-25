@@ -17,16 +17,16 @@ Devvit.addMenuItem({
 
     const subreddit = await reddit.getCurrentSubreddit();
     const post = await reddit.submitPost({
-      title: `Snoovatar (${context.appVersion})`,
+      title: `Quiz`,
       subredditName: subreddit.name,
       // The preview appears while the post loads
-      preview: create_preview(context.appVersion),
+      preview: create_preview(),
     });
     ui.navigateTo(post);
   },
 });
 
-function create_preview(appVersion: string) {
+function create_preview() {
   const disabled = true;
   return (
     <vstack height="100%" width="100%" gap="medium" alignment="center middle">
@@ -54,7 +54,6 @@ function create_preview(appVersion: string) {
         </button>
         <button appearance="bordered" disabled={true}>Create my own Quiz</button>
       </hstack>
-      <text>(appV=&quot;{appVersion}&quot;)</text>
     </vstack>
   );
 }
@@ -350,7 +349,7 @@ Devvit.addCustomPostType({
         </hstack>
         <hstack gap="medium">
           {postType === 'Editor' ? <button appearance="primary" onPress={set_iterator('-')} disabled={!(iterator_ > 0)}>&lt;</button> : null}
-          <text>Question {questionNumber}, (appV=&quot;{context.appVersion}&quot;)</text>
+          <text>Question {questionNumber}</text>
           {postType === 'Editor' ? <button appearance="primary" onPress={set_iterator('+')} disabled={!(iterator_ < max)}>&gt;</button> : null}
         </hstack>
         {postType === 'Editor' ? <text>you can have {(unlimited_mode ? totalMaxQuestions : max_questions)} in a quiz total (you have {questionsArray.length} currently)</text> : null}
@@ -369,7 +368,7 @@ Devvit.addCustomPostType({
               if (currentUserName && subredditName) {
                 context.ui.showToast("Submitting Quiz");
                 const post = await context.reddit.submitPost({
-                  title: postTitle, subredditName: subredditName, preview: create_preview(context.appVersion),
+                  title: postTitle, subredditName: subredditName, preview: create_preview(),
                 }), post_id = post.id, post_id_db = `post-quiz-${post.id}`;
                 let commentString = '', questionIndex = 0;
                 for (const element of questionsArray) {
@@ -380,8 +379,8 @@ Devvit.addCustomPostType({
                   commentString += `\n\n## Question ${++questionIndex}: ${escapeItem(element['Q--'])}\n\n${answers}`;
                 }
                 (await context.reddit.submitComment({
-                  id: post_id, text: `${postTitle}\n\n- \`Quiz Creator:\` u/${currentUserName}\n- \`CreationTime: ${Date()}\`\n- \`AppVersion:`
-                    + ` ${context.appVersion}\` ${commentString}\nto play this quiz please use the buttons on the what otherwise is an image`
+                  id: post_id, text: `${postTitle}\n\n- \`Quiz Creator:\` u/${currentUserName}\n- \`CreationTime: ${Date()}\`\n`
+                    + `${commentString}\nto play this quiz please use the buttons on the what otherwise is an image`
                 })).distinguish(true);
                 await context.redis.set(post_id_db, JSON.stringify({ questionsArray }));
                 await context.redis.expire(post_id_db, 30 * 24 * 60 * 60);
