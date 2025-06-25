@@ -21,6 +21,10 @@ the corect answer isnt there but the answers are.
 
 ## changelog
 
+### 0.1.0: markdown_escape
+
+takeout V number. 
+
 ### 0.0.11: updated devvit
 
 this quiz is for everyone to everyone, not mod only.
